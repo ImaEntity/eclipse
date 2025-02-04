@@ -78,6 +78,7 @@ public class AutoEat extends Module {
 
     private void stopEating() {
         if(Eclipse.client.player == null) return;
+        if(!this.eating) return;
 
         this.eating = false;
         Eclipse.client.options.useKey.setPressed(false);
@@ -100,6 +101,7 @@ public class AutoEat extends Module {
 
     private void startEating() {
         if(Eclipse.client.player == null) return;
+        if(this.eating) return;
 
         this.slot = findFood();
         if(this.slot == Slots.INVALID_SLOT) return;
@@ -126,6 +128,12 @@ public class AutoEat extends Module {
     @Override
     public void tick() {
         if(Eclipse.client.player == null) return;
+
+        // Fuck off if we can't eat (this shit got me killed like four times)
+        if(Eclipse.client.player.getHungerManager().getFoodLevel() == 20) {
+            this.stopEating();
+            return;
+        }
 
         boolean health = Eclipse.client.player.getHealth() <= (float) this.config.get("HealthThreshold");
         boolean hunger = Eclipse.client.player.getHungerManager().getFoodLevel() <= (float) this.config.get("HungerThreshold");

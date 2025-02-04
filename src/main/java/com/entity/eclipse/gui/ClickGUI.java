@@ -32,6 +32,8 @@ public class ClickGUI extends Screen {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if(Eclipse.openGUIKey.matchesKey(keyCode, scanCode)) {
             this.close();
+
+            Eclipse.client.setScreen(new ClientSettingsGUI());
             return true;
         }
 
@@ -72,6 +74,14 @@ public class ClickGUI extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float tickDelta) {
+        context.drawCenteredTextWithShadow(
+                this.textRenderer,
+                String.format("Press (%s) to open client config.", Eclipse.openGUIKey.getBoundKeyLocalizedText().getString()),
+                (int) (this.width / 2.0),
+                (int) (this.height - this.padding - 50),
+                0xFFAA00
+        );
+
         for(int i = 0; i < this.types.length; i++) {
             ArrayList<Module> ourModules = new ArrayList<>();
 
@@ -80,7 +90,7 @@ public class ClickGUI extends Screen {
 
             double width = (this.width - (this.types.length + 1) * this.padding) / this.types.length;
             double x = i * (this.padding + width);
-            double height = (this.padding * 3 + (this.textRenderer.fontHeight + this.padding) * (ourModules.size()));
+            double height = (this.padding * 3 + (this.textRenderer.fontHeight + this.padding) * ourModules.size());
 
             context.fill(
                     (int) (this.padding + x),

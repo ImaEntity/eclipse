@@ -23,6 +23,7 @@ public class CommandManager {
         commands.add(new Test());
         commands.add(new Toggle());
         commands.add(new Unbind());
+        commands.add(new Update());
         commands.add(new VClip());
     }
 

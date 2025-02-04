@@ -55,7 +55,8 @@ public class ConfigManager {
 
         stream.write(ModuleManager.getModules().size());
         for(Module module : ModuleManager.getModules()) {
-            String name = module.getName();
+            String name = module.getName()
+                    .replace('λ', '_'); // unicode bs
 
             stream.write(name.length() >> 8);
             stream.write(name.length() & 0xFF);
@@ -130,18 +131,28 @@ public class ConfigManager {
                 short valueLength = (short) (stream.read() << 8 | stream.read());
                 String value = new String(stream.readNBytes(valueLength));
 
-                Eclipse.config.set(key, value);
+                if(Eclipse.config.getRaw(key) == null) {
+                    Eclipse.log("Ignoring missing property: " + key);
+                    continue;
+                }
+
+                Eclipse.config.create(
+                        key,
+                        Eclipse.config.getRaw(key).fromString(value)
+                );
             }
 
             int moduleCount = stream.read();
             for(int i = 0; i < moduleCount; i++) {
                 short nameLength = (short) (stream.read() << 8 | stream.read());
-                String name = new String(stream.readNBytes(nameLength));
+                String name = new String(stream.readNBytes(nameLength))
+                        .replace('_', 'λ'); // for modules from scripts
 
+                boolean modifyModule = true;
                 Module module = ModuleManager.getByName(name);
                 if(module == null) {
                     Eclipse.log("Failed to load module: " + name);
-                    continue;
+                    modifyModule = false;
                 }
 
                 int keybindCode = stream.read() << 24 | stream.read() << 16 | stream.read() << 8 | stream.read();
@@ -150,15 +161,18 @@ public class ConfigManager {
                 if(version >= 3)
                     keybindTOR = stream.read() == 1;
 
-                module.keybind = keybindIsKey ?
-                        Keybind.key(keybindCode, keybindTOR) :
-                        Keybind.mouse(keybindCode, keybindTOR);
+                if(modifyModule) {
+                    module.keybind = keybindIsKey ?
+                            Keybind.key(keybindCode, keybindTOR) :
+                            Keybind.mouse(keybindCode, keybindTOR);
+                }
 
                 boolean showToasts = true;
                 if(version >= 4)
                     showToasts = stream.read() == 1;
 
-                module.shouldShowToasts(showToasts);
+                if(modifyModule)
+                    module.shouldShowToasts(showToasts);
 
                 int moduleOptionCount = stream.read();
                 for(int j = 0; j < moduleOptionCount; j++) {
@@ -168,15 +182,17 @@ public class ConfigManager {
                     short valueLength = (short) (stream.read() << 8 | stream.read());
                     String value = new String(stream.readNBytes(valueLength));
 
-                    if(module.config.getRaw(key) == null) {
-                        Eclipse.log(module + " has no property " + key);
+                    if(modifyModule && module.config.getRaw(key) == null) {
+                        Eclipse.log("Ignoring missing property: " + key + " on module: " + module.getName());
                         continue;
                     }
 
-                    module.config.create(
-                            key,
-                            module.config.getRaw(key).fromString(value)
-                    );
+                    if(modifyModule) {
+                        module.config.create(
+                                key,
+                                module.config.getRaw(key).fromString(value)
+                        );
+                    }
                 }
             }
 

@@ -3,7 +3,13 @@ package com.entity.eclipse.mixin;
 import com.entity.eclipse.Eclipse;
 import com.entity.eclipse.commands.base.Command;
 import com.entity.eclipse.commands.base.CommandManager;
+import com.entity.eclipse.utils.UpdateManager;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.text.ClickEvent;
+import net.minecraft.text.HoverEvent;
+import net.minecraft.text.Style;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,7 +23,7 @@ public class ClientPlayNetworkHandlerMixin {
 	public void onChatMessage(String message, CallbackInfo info) {
 		if(Eclipse.client == null) return;
 
-		String chatPrefix = ((String) Eclipse.config.get("chatPrefix")).toLowerCase();
+		String chatPrefix = ((String) Eclipse.config.get("ChatPrefix")).toLowerCase();
 		if(!message.toLowerCase().startsWith(chatPrefix)) return;
 
 		info.cancel();
@@ -34,5 +40,36 @@ public class ClientPlayNetworkHandlerMixin {
 			Eclipse.notifyUser(command);
 			cmd.onExecute(args);
 		}
+	}
+
+	@Inject(method = "onGameJoin", at = @At("TAIL"))
+	public void checkForUpdate(CallbackInfo info) {
+		UpdateManager.Update latest = UpdateManager.getLatest();
+		if(latest.version().equalsIgnoreCase(Eclipse.VERSION))
+			return;
+
+		if(!((boolean) Eclipse.config.get("ShouldNotifyUpdates")))
+			return;
+
+		Eclipse.notifyUser("New version available: " + latest.version());
+		Eclipse.notifyUserRaw(Text.literal("")
+				.append(Text.literal("Click "))
+				.append(Text.literal("here")
+						.setStyle(Style.EMPTY
+								.withColor(Formatting.GOLD)
+								.withUnderline(true)
+								.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, String.format(
+										"https://github.com/ImaEntity/Eclipse/releases/download/%s/%s",
+										latest.version(),
+										latest.jarFileName()
+								)))
+								.withHoverEvent(new HoverEvent(
+										HoverEvent.Action.SHOW_TEXT,
+										Text.of("Download " + latest.jarFileName() + "?")
+								))
+						)
+				)
+				.append(Text.of(" to download the latest update!"))
+		);
 	}
 }

@@ -8,7 +8,7 @@ import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
 public class Gambling extends Module {
     public Gambling() {
-        super("Gambling", "Why would you use this?", ModuleType.MISC);
+        super("Gambling", "Has a 0.01% to kick you from the server each tick.", ModuleType.MISC);
     }
 
     @Override

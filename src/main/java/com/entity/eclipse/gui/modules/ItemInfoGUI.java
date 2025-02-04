@@ -1,6 +1,9 @@
 package com.entity.eclipse.gui.modules;
 
 import com.entity.eclipse.Eclipse;
+import com.entity.eclipse.modules.Module;
+import com.entity.eclipse.modules.ModuleManager;
+import com.entity.eclipse.modules.render.ItemInfo;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
@@ -11,13 +14,19 @@ public class ItemInfoGUI {
         if(Eclipse.client.player == null) return;
 
         TextRenderer textRenderer = Eclipse.client.textRenderer;
-        int width = context.getScaledWindowWidth();
         int height = context.getScaledWindowHeight();
 
         int fontHeight = textRenderer.fontHeight;
         int padding = 3;
 
         ItemStack stack = Eclipse.client.player.getMainHandStack();
+
+        Module itemInfo = ModuleManager.getByClass(ItemInfo.class);
+        if(itemInfo == null) return;
+
+        if((boolean) itemInfo.config.get("ShowOffhand"))
+            stack = Eclipse.client.player.getOffHandStack();
+
         if(stack.isEmpty()) return;
 
         int durability = stack.getMaxDamage() - stack.getDamage();

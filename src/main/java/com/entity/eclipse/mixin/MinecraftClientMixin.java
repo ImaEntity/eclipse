@@ -15,7 +15,14 @@ public class MinecraftClientMixin {
 	@Shadow
 	private int itemUseCooldown;
 
-	@Redirect(method = "handleInputEvents", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, target = "Lnet/minecraft/client/MinecraftClient;itemUseCooldown:I"))
+	@Redirect(
+			method = "handleInputEvents",
+			at = @At(
+					value = "FIELD",
+					opcode = Opcodes.GETFIELD,
+					target = "Lnet/minecraft/client/MinecraftClient;itemUseCooldown:I"
+			)
+	)
 	public int resetItemUseCooldown(MinecraftClient client) {
 		Module fastUse =  ModuleManager.getByClass(FastUse.class);
 		if(fastUse == null) return this.itemUseCooldown;
